@@ -12,7 +12,7 @@ export default function Jobs() {
 
     console.log('Vérif debug : appId =', appId, '| apiKey =', apiKey); // <- debug Vercel
 
-    const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${resultsPerPage}`;
+    const url ='/api/adzuna';
 
     fetch(url)
       .then((res) => res.json())
