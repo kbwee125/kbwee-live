@@ -1,48 +1,44 @@
 import { useEffect, useState } from 'react';
 
-export default function JobsPage() {
+export default function Jobs() {
   const [jobs, setJobs] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const appId = process.env.NEXT_PUBLIC_ADZUNA_APP_ID;
-        const apiKey = process.env.NEXT_PUBLIC_ADZUNA_API_KEY;
-        const country = 'lu'; // Luxembourg
-        const resultsPerPage = 5;
+    const appId = process.env.NEXT_PUBLIC_ADZUNA_APP_ID;
+    const apiKey = process.env.NEXT_PUBLIC_ADZUNA_API_KEY;
+    const country = 'lu';
+    const resultsPerPage = 5;
 
-        const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${resultsPerPage}&content-type=application/json`;
+    console.log('Vérif debug : appId =', appId, '| apiKey =', apiKey); // <- debug Vercel
 
-        const response = await fetch(url);
-        const data = await response.json();
+    const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?app_id=${appId}&app_key=${apiKey}&results_per_page=${resultsPerPage}`;
 
-        if (data.results) {
-          setJobs(data.results);
-        } else {
-          console.error('Aucune donnée reçue depuis Adzuna', data);
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des annonces :', error);
-      }
-    }
-
-    fetchJobs();
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('Réponse Adzuna', data); // <- debug API
+        setJobs(data.results || []);
+      })
+      .catch((err) => {
+        console.error('Erreur API Adzuna :', err);
+        setError('Erreur lors de la récupération des annonces');
+      });
   }, []);
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div>
       <h1>Annonces récentes</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {jobs.length === 0 ? (
         <p>Aucune annonce disponible.</p>
       ) : (
         <ul>
-          {jobs.map((job, index) => (
-            <li key={index}>
-              <h3>{job.title}</h3>
-              <p>{job.company.display_name}</p>
-              <p>{job.location.display_name}</p>
-              <p>{job.description}</p>
-              <a href={job.redirect_url} target="_blank" rel="noopener noreferrer">Voir l’annonce</a>
+          {jobs.map((job, i) => (
+            <li key={i}>
+              <strong>{job.title}</strong> chez <em>{job.company.display_name}</em> à {job.location.display_name}
+              <p>{job.description?.slice(0, 120)}...</p>
+              <a href={job.redirect_url} target="_blank" rel="noopener noreferrer">Voir</a>
             </li>
           ))}
         </ul>
