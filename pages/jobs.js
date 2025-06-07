@@ -7,7 +7,7 @@ export default function Jobs() {
   useEffect(() => {
     const appId = process.env.NEXT_PUBLIC_ADZUNA_APP_ID;
     const apiKey = process.env.NEXT_PUBLIC_ADZUNA_API_KEY;
-    const country = 'fr';
+    const country = 'gb';
     const resultsPerPage = 5;
 
     console.log('Vérif debug : appId =', appId, '| apiKey =', apiKey); // <- debug Vercel
