@@ -5,15 +5,24 @@ export default function Jobs() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/jobs')
-      .then(res => res.json())
-      .then(data => {
-        setJobs(data.results || []);
-      })
-      .catch(err => {
-        console.error('Erreur API côté client :', err);
-        setError('Erreur lors de la récupération des annonces');
-      });
+    const fetchJobs = async () => {
+      try {
+        const response = await fetch('/api/getJobs');
+        const data = await response.json();
+
+        if (response.ok) {
+          setJobs(data.jobs || []);
+        } else {
+          console.error('Erreur Supabase API :', data.error);
+          setError("Erreur lors de la récupération des annonces");
+        }
+      } catch (err) {
+        console.error('Erreur requête :', err);
+        setError("Erreur lors de la récupération des annonces");
+      }
+    };
+
+    fetchJobs();
   }, []);
 
   return (
@@ -26,7 +35,9 @@ export default function Jobs() {
         <ul>
           {jobs.map((job, i) => (
             <li key={i}>
-              <strong>{job.title}</strong> chez {job.company.display_name} ({job.location.display_name})
+              <strong>{job.title}</strong> chez {job.company} à {job.location}
+              <br />
+              {job.description}
             </li>
           ))}
         </ul>
