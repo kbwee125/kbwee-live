@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -6,19 +11,16 @@ export default function Jobs() {
 
   useEffect(() => {
     const fetchJobs = async () => {
-      try {
-        const response = await fetch('/api/getJobs');
-        const data = await response.json();
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (response.ok) {
-          setJobs(data.jobs || []);
-        } else {
-          console.error('Erreur Supabase API :', data.error);
-          setError("Erreur lors de la récupération des annonces");
-        }
-      } catch (err) {
-        console.error('Erreur requête :', err);
-        setError("Erreur lors de la récupération des annonces");
+      if (error) {
+        console.error('Erreur Supabase :', error.message);
+        setError("Erreur lors du chargement des annonces.");
+      } else {
+        setJobs(data);
       }
     };
 
@@ -33,11 +35,10 @@ export default function Jobs() {
         <p>Aucune annonce disponible.</p>
       ) : (
         <ul>
-          {jobs.map((job, i) => (
-            <li key={i}>
-              <strong>{job.title}</strong> chez {job.company} à {job.location}
-              <br />
-              {job.description}
+          {jobs.map((job, index) => (
+            <li key={job.id}>
+              <strong>{job.title}</strong> chez <em>{job.company}</em> – {job.location}
+              <p>{job.description}</p>
             </li>
           ))}
         </ul>
