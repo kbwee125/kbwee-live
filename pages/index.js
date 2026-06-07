@@ -31,7 +31,7 @@ export default function Home() {
         </div>
 
         {/* Headline */}
-        <h1 className="font-syne font-extrabold text-5xl md:text-7xl leading-none tracking-tight max-w-3xl mb-6">
+        <h1 className="font-syne font-extrabold text-4xl md:text-6xl leading-tight tracking-tight max-w-3xl mb-6">
           Le recrutement{" "}
           <span className="text-blue-600">humain,</span>
           <br />intelligent, équitable.
