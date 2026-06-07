@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import Link from "next/link";
+import { supabase } from "../lib/supabaseClient";
 
 export default function PostJob() {
   const [lang, setLang] = useState("fr");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     company: "",
@@ -35,8 +38,9 @@ export default function PostJob() {
       placeholder_description: "Décrivez le poste, les missions, le profil recherché...",
       placeholder_email: "recrutement@entreprise.com",
       btn_submit: "Publier l'offre",
-      success_title: "Offre soumise avec succès.",
-      success_sub: "Nous reviendrons vers vous prochainement. Fonctionnalité complète bientôt disponible.",
+      btn_loading: "Publication en cours...",
+      success_title: "Offre publiée avec succès.",
+      success_sub: "Votre offre est maintenant visible sur Kbwee.",
       back: "Retour à l'accueil",
       types: ["CDI", "CDD", "Stage", "Freelance", "Alternance"],
       sectors: ["Finance", "Tech", "Consulting", "RH", "Marketing", "Juridique", "Autre"],
@@ -61,8 +65,9 @@ export default function PostJob() {
       placeholder_description: "Describe the role, responsibilities, required profile...",
       placeholder_email: "recruitment@company.com",
       btn_submit: "Post the job",
-      success_title: "Job submitted successfully.",
-      success_sub: "We will get back to you shortly. Full functionality coming soon.",
+      btn_loading: "Publishing...",
+      success_title: "Job published successfully.",
+      success_sub: "Your job is now visible on Kbwee.",
       back: "Back to home",
       types: ["Permanent", "Fixed-term", "Internship", "Freelance", "Apprenticeship"],
       sectors: ["Finance", "Tech", "Consulting", "HR", "Marketing", "Legal", "Other"],
@@ -75,9 +80,30 @@ export default function PostJob() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError("");
+
+    const { error } = await supabase
+      .from("jobs")
+      .insert([{
+        title: formData.title,
+        company: formData.company,
+        location: formData.location,
+        type: formData.type,
+        sector: formData.sector,
+        description: formData.description,
+        email: formData.email,
+      }]);
+
+    setLoading(false);
+
+    if (error) {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+    } else {
+      setSubmitted(true);
+    }
   };
 
   return (
@@ -103,18 +129,15 @@ export default function PostJob() {
         </nav>
       </header>
 
-      {/* MAIN */}
       <main className="flex-grow pt-28 pb-20 px-6">
         <div className="max-w-2xl mx-auto">
 
-          {/* Header */}
           <div className="mb-10">
             <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-3">{copy.badge}</div>
             <h1 className="font-display text-4xl font-extrabold tracking-tight mb-3">{copy.heading}</h1>
             <p className="text-gray-400 font-light">{copy.subheading}</p>
           </div>
 
-          {/* Succès */}
           {submitted ? (
             <div className="border-2 border-gray-100 rounded-2xl p-12 text-center">
               <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -124,121 +147,70 @@ export default function PostJob() {
               </div>
               <h2 className="font-display text-2xl font-extrabold mb-2">{copy.success_title}</h2>
               <p className="text-gray-400 font-light mb-8">{copy.success_sub}</p>
-              <Link href="/" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">
-                {copy.back}
+              <Link href="/jobs" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                Voir les offres →
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* Ligne titre + entreprise */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_title} *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    placeholder={copy.placeholder_title}
-                    required
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                  />
+                  <input type="text" name="title" value={formData.title} onChange={handleChange} placeholder={copy.placeholder_title} required
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_company} *</label>
-                  <input
-                    type="text"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleChange}
-                    placeholder={copy.placeholder_company}
-                    required
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                  />
+                  <input type="text" name="company" value={formData.company} onChange={handleChange} placeholder={copy.placeholder_company} required
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                 </div>
               </div>
 
-              {/* Lieu + type + secteur */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_location} *</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    placeholder={copy.placeholder_location}
-                    required
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                  />
+                  <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder={copy.placeholder_location} required
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_type}</label>
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white"
-                  >
+                  <select name="type" value={formData.type} onChange={handleChange}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
                     {copy.types.map((t) => <option key={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_sector}</label>
-                  <select
-                    name="sector"
-                    value={formData.sector}
-                    onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white"
-                  >
+                  <select name="sector" value={formData.sector} onChange={handleChange}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
                     <option value="">—</option>
                     {copy.sectors.map((s) => <option key={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* Description */}
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_description} *</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder={copy.placeholder_description}
-                  required
-                  rows={6}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none"
-                />
+                <textarea name="description" value={formData.description} onChange={handleChange} placeholder={copy.placeholder_description} required rows={6}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none"/>
               </div>
 
-              {/* Email contact */}
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1.5 block">{copy.label_email} *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder={copy.placeholder_email}
-                  required
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder={copy.placeholder_email} required
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
               </div>
 
-              {/* Séparateur info */}
-              <div className="bg-blue-50 rounded-xl px-4 py-3 text-xs text-blue-600 font-medium">
-                {lang === "fr"
-                  ? "Votre offre sera examinée avant publication. Fonctionnalité complète bientôt disponible."
-                  : "Your job will be reviewed before publishing. Full functionality coming soon."}
-              </div>
+              {error && (
+                <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">
+                  {error}
+                </div>
+              )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full bg-gray-900 text-white py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition"
-              >
-                {copy.btn_submit}
+              <button type="submit" disabled={loading}
+                className="w-full bg-gray-900 text-white py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-50">
+                {loading ? copy.btn_loading : copy.btn_submit}
               </button>
 
             </form>
@@ -246,7 +218,6 @@ export default function PostJob() {
         </div>
       </main>
 
-      {/* FOOTER */}
       <footer className="border-t border-gray-200 px-8 py-4 text-center">
         <p className="text-xs text-gray-300">© 2026 Kbwee</p>
       </footer>
