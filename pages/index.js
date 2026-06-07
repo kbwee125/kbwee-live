@@ -25,7 +25,7 @@ export default function Home() {
         
         <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
-          Plateforme IA · Recrutement 2025
+          Plateforme IA · Recrutement 2026
         </div>
 
         <h1 className="font-display font-extrabold text-5xl md:text-6xl leading-tight tracking-normal max-w-3xl mb-6">
@@ -35,7 +35,7 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-gray-400 font-light max-w-md mb-10">
-          Sans distraction. Sans bullshit. Un seul objectif : le bon fit entre le bon candidat et la bonne entreprise.
+          Une plateforme focalisée sur l'essentiel. Sans compromis. Pour les candidats et les entreprises qui visent le bon fit.
         </p>
 
         <div className="flex gap-3 flex-wrap justify-center mb-20">
@@ -49,16 +49,16 @@ export default function Home() {
 
         <div className="flex gap-16 flex-wrap justify-center">
           <div className="text-center">
-            <div className="font-display text-3xl font-extrabold">94%</div>
-            <div className="text-xs text-gray-400 mt-1">Satisfaction candidats</div>
+            <div className="font-display text-3xl font-extrabold">100%</div>
+            <div className="text-xs text-gray-400 mt-1">Focalisé sur l'emploi</div>
           </div>
           <div className="text-center">
-            <div className="font-display text-3xl font-extrabold">3×</div>
-            <div className="text-xs text-gray-400 mt-1">Plus rapide qu'un recrutement classique</div>
+            <div className="font-display text-3xl font-extrabold">IA</div>
+            <div className="text-xs text-gray-400 mt-1">Assisté à chaque étape</div>
           </div>
           <div className="text-center">
-            <div className="font-display text-3xl font-extrabold">0 BS</div>
-            <div className="text-xs text-gray-400 mt-1">Pas de feed social</div>
+            <div className="font-display text-3xl font-extrabold">2 côtés</div>
+            <div className="text-xs text-gray-400 mt-1">Candidats & Recruteurs</div>
           </div>
         </div>
       </main>
@@ -74,7 +74,12 @@ export default function Home() {
             CV, LinkedIn, entretiens — Kbwee t'aide à te présenter sous ton meilleur jour et te connecte aux offres qui correspondent vraiment à ton profil.
           </p>
           <ul className="space-y-3 mb-10">
-            {["CV Optimizer IA — restructuration selon le poste visé", "LinkedIn Score — optimisation section par section", "Mock Interview — entraîne-toi, reçois un feedback IA", "Job Match — offres alignées avec ton vrai profil"].map((item, i) => (
+            {[
+              "CV Optimizer IA — restructuration selon le poste visé",
+              "LinkedIn Score — optimisation section par section",
+              "Mock Interview — entraîne-toi, reçois un feedback IA",
+              "Job Match — offres alignées avec ton vrai profil"
+            ].map((item, i) => (
               <li key={i} className="flex items-start gap-3 text-sm">
                 <span className="mt-0.5 w-5 h-5 rounded-md bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600 font-bold text-xs">✓</span>
                 <span><strong>{item.split("—")[0]}</strong>—{item.split("—")[1]}</span>
@@ -92,10 +97,15 @@ export default function Home() {
             Trouve le talent.<br />Pas juste un CV.
           </h2>
           <p className="text-gray-400 font-light mb-8 leading-relaxed">
-            Kbwee structure ton process d'entretien, évalue les candidats en profondeur et t'aide à recruter sans biais.
+            Kbwee structure ton process d'entretien, évalue les candidats en profondeur et t'aide à recruter avec précision.
           </p>
           <ul className="space-y-3 mb-10">
-            {["Interview Kit IA — grilles d'entretien par poste", "Candidate Insights — fiche synthèse IA par candidat", "Bias Checker — recrutement équitable et objectif", "Fit Score — compatibilité candidat ↔ culture/poste"].map((item, i) => (
+            {[
+              "Interview Kit IA — grilles d'entretien par poste",
+              "Candidate Insights — fiche synthèse IA par candidat",
+              "Bias Checker — recrutement équitable et objectif",
+              "Fit Score — compatibilité candidat ↔ culture/poste"
+            ].map((item, i) => (
               <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
                 <span className="mt-0.5 w-5 h-5 rounded-md bg-blue-900 flex items-center justify-center flex-shrink-0 text-blue-400 font-bold text-xs">✓</span>
                 <span><strong className="text-white">{item.split("—")[0]}</strong>—{item.split("—")[1]}</span>
@@ -115,12 +125,12 @@ export default function Home() {
         <p className="text-center text-gray-400 font-light mb-14">Simple, rapide, efficace. Trois étapes pour trouver le bon fit.</p>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { num: "01", label: "Profil", title: "Crée ton profil", desc: "Importe ton CV ou LinkedIn. Kbwee l'analyse, le score, et te suggère comment le renforcer." },
-            { num: "02", label: "Match", title: "Trouve le bon fit", desc: "Notre algorithme te connecte avec des offres alignées avec tes compétences et ta culture." },
-            { num: "03", label: "Prépare", title: "Décroche l'entretien", desc: "Entraîne-toi avec notre simulateur IA. Feedback instantané et personnalisé par poste." }
+            { label: "Profil", title: "Crée ton profil", desc: "Importe ton CV ou LinkedIn. Kbwee l'analyse, le score, et te suggère comment le renforcer pour le marché." },
+            { label: "Match", title: "Trouve le bon fit", desc: "Notre algorithme te connecte avec des offres réellement alignées avec tes compétences, ta culture et tes ambitions." },
+            { label: "Prépare", title: "Décroche l'entretien", desc: "Entraîne-toi avec notre simulateur d'entretien IA. Feedback instantané, progressif, personnalisé par poste." }
           ].map((step, i) => (
             <div key={i} className="border-2 border-gray-100 rounded-2xl p-8 hover:border-gray-900 transition">
-              <div className="text-xs font-bold text-blue-600 tracking-widest mb-4">{step.num} · {step.label}</div>
+              <div className="text-xs font-bold text-blue-600 tracking-widest mb-4">0{i+1} · {step.label}</div>
               <h3 className="font-display text-xl font-bold mb-3">{step.title}</h3>
               <p className="text-sm text-gray-400 font-light leading-relaxed">{step.desc}</p>
             </div>
@@ -131,12 +141,12 @@ export default function Home() {
       {/* CTA FINAL */}
       <section className="bg-gray-900 text-white py-24 px-8 text-center">
         <h2 className="font-display text-4xl md:text-5xl font-extrabold max-w-2xl mx-auto mb-6 leading-tight">
-          Prêt à changer la façon dont tu recrutes ?
+          Prêt à transformer ta façon de recruter ?
         </h2>
         <p className="text-gray-400 font-light mb-10">Rejoins la liste d'attente. Lancement bêta bientôt.</p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/profil" className="bg-white text-gray-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:opacity-80 transition">
-            Je suis candidat →
+            Je cherche un emploi →
           </Link>
           <Link href="/post-job" className="border-2 border-gray-600 text-white px-7 py-3.5 rounded-xl text-sm font-medium hover:border-gray-400 transition">
             Je recrute
@@ -147,7 +157,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="border-t border-gray-200 px-8 py-6 flex justify-between items-center flex-wrap gap-4">
         <span className="font-display font-extrabold text-lg">Kbwee</span>
-        <p className="text-xs text-gray-400">© 2025 Kbwee. Le recrutement humain, intelligent, équitable.</p>
+        <p className="text-xs text-gray-400">© 2026 Kbwee. Le recrutement humain, intelligent, équitable.</p>
         <p className="text-xs text-gray-400">Jobs · Recruteurs · À propos · Contact</p>
       </footer>
 
