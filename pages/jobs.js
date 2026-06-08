@@ -9,7 +9,7 @@ function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
   if (diff === 0) return "Aujourd'hui";
   if (diff === 1) return "Il y a 1 jour";
-  return `Il y a ${diff} jours`;
+  return "Il y a " + diff + " jours";
 }
 
 export default function Jobs() {
@@ -20,17 +20,19 @@ export default function Jobs() {
   const [location, setLocation] = useState("Tous");
   const [source, setSource] = useState("tous");
 
-  useEffect(() => {
+  useEffect(function() {
     fetchAllJobs();
   }, []);
 
   async function fetchAllJobs() {
     setLoading(true);
 
-    const { data: supabaseJobs } = await supabase
+    const result = await supabase
       .from("jobs")
       .select("*")
       .order("created_at", { ascending: false });
+
+    const supabaseJobs = result.data || [];
 
     let jsearchJobs = [];
     try {
@@ -41,50 +43,38 @@ export default function Jobs() {
       console.error("Erreur JSearch:", e);
     }
 
-    const allJobs = [
-      ...(supabaseJobs || []).map((j) => ({ ...j, _source: "kbwee" })),
-      ...jsearchJobs.map((j) => ({ ...j, _source: "external" })),
-    ];
+    const allJobs = supabaseJobs.map(function(j) {
+      return Object.assign({}, j, { _source: "kbwee" });
+    }).concat(jsearchJobs.map(function(j) {
+      return Object.assign({}, j, { _source: "external" });
+    }));
 
     setJobs(allJobs);
     setLoading(false);
   }
 
-  const filtered = jobs.filter((job) => {
+  const filtered = jobs.filter(function(job) {
     const matchSearch =
-      job.title?.toLowerCase().includes(search.toLowerCase()) ||
-      job.company?.toLowerCase().includes(search.toLowerCase());
+      (job.title || "").toLowerCase().includes(search.toLowerCase()) ||
+      (job.company || "").toLowerCase().includes(search.toLowerCase());
     const matchSector = sector === "Tous" || job.sector === sector;
-    const matchLocation =
-      location === "Tous" ||
-      job.location?.toLowerCase().includes(location.toLowerCase());
-    const matchSource =
-      source === "tous" ||
+    const matchLocation = location === "Tous" || (job.location || "").toLowerCase().includes(location.toLowerCase());
+    const matchSource = source === "tous" ||
       (source === "kbwee" && job._source === "kbwee") ||
       (source === "external" && job._source === "external");
     return matchSearch && matchSector && matchLocation && matchSource;
   });
 
   return (
-    <div
-      className="min-h-screen bg-white text-gray-900"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
-    >
-      <style>{`
+    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
         .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      `}} />
 
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 h-16">
-        <Link href="/" className="font-display text-xl font-extrabold tracking-tight mr-4">
-          Kbwee
-        </Link>
+        <Link href="/" className="font-display text-xl font-extrabold tracking-tight mr-4">Kbwee</Link>
         <nav className="flex items-center gap-4 md:gap-8">
           <Link href="/jobs" className="text-sm text-gray-900 font-semibold">Jobs</Link>
           <Link href="/post-job" className="text-sm text-gray-500 hover:text-gray-900 transition">Recruteurs</Link>
@@ -94,36 +84,22 @@ export default function Jobs() {
 
       <div className="pt-28 pb-12 px-6 md:px-8 bg-gray-50 border-b border-gray-200">
         <div className="max-w-4xl mx-auto">
-          <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-3">
-            Offres d'emploi
-          </div>
-          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-            Trouvez votre prochain poste.
-          </h1>
-          <p className="text-gray-400 font-light mb-8">
-            Des offres vérifiées, présentées avec clarté. Juste l'essentiel.
-          </p>
+          <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-3">Offres d'emploi</div>
+          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Trouvez votre prochain poste.</h1>
+          <p className="text-gray-400 font-light mb-8">Des offres vérifiées, présentées avec clarté. Juste l'essentiel.</p>
           <div className="flex gap-3 flex-wrap">
             <input
               type="text"
               placeholder="Titre, entreprise..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={function(e) { setSearch(e.target.value); }}
               className="flex-1 min-w-48 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
             />
-            <select
-              value={sector}
-              onChange={(e) => setSector(e.target.value)}
-              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white"
-            >
-              {SECTORS.map((s) => <option key={s}>{s}</option>)}
+            <select value={sector} onChange={function(e) { setSector(e.target.value); }} className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
+              {SECTORS.map(function(s) { return <option key={s}>{s}</option>; })}
             </select>
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white"
-            >
-              {LOCATIONS.map((l) => <option key={l}>{l}</option>)}
+            <select value={location} onChange={function(e) { setLocation(e.target.value); }} className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
+              {LOCATIONS.map(function(l) { return <option key={l}>{l}</option>; })}
             </select>
           </div>
           <div className="flex gap-2 mt-4 flex-wrap">
@@ -131,19 +107,14 @@ export default function Jobs() {
               { key: "tous", label: "Toutes les offres" },
               { key: "kbwee", label: "Publiées sur Kbwee" },
               { key: "external", label: "Sources externes" },
-            ].map((s) => (
-              <button
-                key={s.key}
-                onClick={() => setSource(s.key)}
-                className={`text-xs px-4 py-2 rounded-full font-medium transition ${
-                  source === s.key
-                    ? "bg-gray-900 text-white"
-                    : "bg-white border border-gray-200 text-gray-500 hover:border-gray-900"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
+            ].map(function(s) {
+              return (
+                <button key={s.key} onClick={function() { setSource(s.key); }}
+                  className={source === s.key ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900"}>
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -165,56 +136,38 @@ export default function Jobs() {
                   <p className="text-lg">Aucune offre ne correspond à votre recherche.</p>
                 </div>
               ) : (
-                filtered.map((job) => (
-                  <div
-                    key={job.id}
-                    className={`border-2 rounded-2xl p-6 hover:border-gray-900 transition ${
-                      job._source === "kbwee"
-                        ? "border-blue-100 bg-blue-50"
-                        : "border-gray-100"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {job._source === "kbwee" && (
-                            <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                              Kbwee
-                            </span>
-                          )}
-                          {job._source === "external" && job.source && (
-                            <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                              {job.source}
-                            </span>
-                          )}
-                          {job.sector && (
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                              {job.sector}
-                            </span>
-                          )}
+                filtered.map(function(job) {
+                  return (
+                    <div key={job.id} className={job._source === "kbwee" ? "border-2 border-blue-100 bg-blue-50 rounded-2xl p-6 hover:border-gray-900 transition" : "border-2 border-gray-100 rounded-2xl p-6 hover:border-gray-900 transition"}>
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {job._source === "kbwee" && (
+                              <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">Kbwee</span>
+                            )}
+                            {job._source === "external" && job.source && (
+                              <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{job.source}</span>
+                            )}
+                            {job.sector && (
+                              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{job.sector}</span>
+                            )}
+                          </div>
+                          <h2 className="font-display text-xl font-bold mb-1">{job.title}</h2>
+                          <p className="text-sm text-gray-500 mb-3">
+                            <strong>{job.company}</strong> · {job.location} · {job.type}
+                          </p>
+                          <p className="text-sm text-gray-400 font-light leading-relaxed line-clamp-2">{job.description}</p>
                         </div>
-                        <h2 className="font-display text-xl font-bold mb-1">{job.title}</h2>
-                        <p className="text-sm text-gray-500 mb-3">
-                          <strong>{job.company}</strong> · {job.location} · {job.type}
-                        </p>
-                        <p className="text-sm text-gray-400 font-light leading-relaxed line-clamp-2">
-                          {job.description}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                        <span className="text-xs text-gray-300">{timeAgo(job.created_at)}</span>
-                        
-                          href={job.apply_link && job.apply_link !== "#" ? job.apply_link : undefined}
-                          target={job.apply_link && job.apply_link !== "#" ? "_blank" : undefined}
-                          rel="noopener noreferrer"
-                          className="bg-gray-900 text-white text-sm px-5 py-2.5 rounded-xl hover:opacity-80 transition font-medium cursor-pointer"
-                        >
-                          Postuler →
-                        </a>
+                        <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                          <span className="text-xs text-gray-300">{timeAgo(job.created_at)}</span>
+                          <a href={job.apply_link || "#"} target="_blank" rel="noopener noreferrer" className="bg-gray-900 text-white text-sm px-5 py-2.5 rounded-xl hover:opacity-80 transition font-medium">
+                            Postuler →
+                          </a>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -222,13 +175,8 @@ export default function Jobs() {
 
         <div className="mt-16 bg-gray-900 rounded-2xl p-8 text-center text-white">
           <h3 className="font-display text-2xl font-extrabold mb-2">Vous recrutez ?</h3>
-          <p className="text-gray-400 font-light mb-6">
-            Publiez votre offre et accédez aux meilleurs profils vérifiés par Kbwee.
-          </p>
-          <Link
-            href="/post-job"
-            className="inline-block bg-white text-gray-900 px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-80 transition"
-          >
+          <p className="text-gray-400 font-light mb-6">Publiez votre offre et accédez aux meilleurs profils vérifiés par Kbwee.</p>
+          <Link href="/post-job" className="inline-block bg-white text-gray-900 px-6 py-3 rounded-xl text-sm font-semibold hover:opacity-80 transition">
             Publier une offre →
           </Link>
         </div>
