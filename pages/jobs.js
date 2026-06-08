@@ -20,9 +20,9 @@ export default function Jobs() {
   const [location, setLocation] = useState("Tous");
   const [source, setSource] = useState("tous");
 
-  useEffect(function() { fetchAllJobs(); }, []);
+  useEffect(function() { fetchAllJobs("emploi"); }, []);
 
-  async function fetchAllJobs() {
+  async function fetchAllJobs(searchQuery) {
     setLoading(true);
 
     const result = await supabase
@@ -35,7 +35,8 @@ export default function Jobs() {
 
     let ftJobs = [];
     try {
-      const res = await fetch("/api/france-travail?query=emploi&page=1");
+      const q = searchQuery || "emploi";
+      const res = await fetch("/api/france-travail?query=" + encodeURIComponent(q) + "&page=1");
       const data = await res.json();
       ftJobs = (data.jobs || []).map(function(j) {
         return Object.assign({}, j, { _source: "external" });
@@ -82,14 +83,25 @@ export default function Jobs() {
           <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-3">Offres d'emploi</div>
           <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Trouvez votre prochain poste.</h1>
           <p className="text-gray-400 font-light mb-8">Des offres vérifiées, présentées avec clarté. Juste l'essentiel.</p>
+
           <div className="flex gap-3 flex-wrap">
-            <input
-              type="text"
-              placeholder="Titre, entreprise..."
-              value={search}
-              onChange={function(e) { setSearch(e.target.value); }}
-              className="flex-1 min-w-48 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-            />
+            <div className="flex flex-1 min-w-48 gap-2">
+              <input
+                type="text"
+                placeholder="Titre, entreprise... (Appuyez Entrée pour rechercher)"
+                value={search}
+                onChange={function(e) { setSearch(e.target.value); }}
+                onKeyDown={function(e) {
+                  if (e.key === "Enter") fetchAllJobs(e.target.value);
+                }}
+                className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
+              />
+              <button
+                onClick={function() { fetchAllJobs(search); }}
+                className="bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                Rechercher
+              </button>
+            </div>
             <select value={sector} onChange={function(e) { setSector(e.target.value); }} className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
               {SECTORS.map(function(s) { return <option key={s}>{s}</option>; })}
             </select>
@@ -97,6 +109,7 @@ export default function Jobs() {
               {LOCATIONS.map(function(l) { return <option key={l}>{l}</option>; })}
             </select>
           </div>
+
           <div className="flex gap-2 mt-4 flex-wrap">
             {[
               { key: "tous", label: "Toutes les offres" },
