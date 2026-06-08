@@ -3,7 +3,7 @@ import Link from "next/link";
 import { supabase } from "../lib/supabaseClient";
 
 const SECTORS = ["Tous", "Finance", "Tech", "Consulting", "RH", "Marketing"];
-const LOCATIONS = ["Tous", "Luxembourg", "Paris", "London", "Remote"];
+const LOCATIONS = ["Tous", "Luxembourg", "Paris", "Lyon", "Remote"];
 
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
@@ -20,9 +20,7 @@ export default function Jobs() {
   const [location, setLocation] = useState("Tous");
   const [source, setSource] = useState("tous");
 
-  useEffect(function() {
-    fetchAllJobs();
-  }, []);
+  useEffect(function() { fetchAllJobs(); }, []);
 
   async function fetchAllJobs() {
     setLoading(true);
@@ -31,25 +29,22 @@ export default function Jobs() {
       .from("jobs")
       .select("*")
       .order("created_at", { ascending: false });
+    const supabaseJobs = (result.data || []).map(function(j) {
+      return Object.assign({}, j, { _source: "kbwee" });
+    });
 
-    const supabaseJobs = result.data || [];
-
-    let jsearchJobs = [];
+    let ftJobs = [];
     try {
-      const res = await fetch("/api/jobs?query=analyst&location=Luxembourg");
+      const res = await fetch("/api/france-travail?query=emploi&page=1");
       const data = await res.json();
-      jsearchJobs = data.jobs || [];
+      ftJobs = (data.jobs || []).map(function(j) {
+        return Object.assign({}, j, { _source: "external" });
+      });
     } catch (e) {
-      console.error("Erreur JSearch:", e);
+      console.error("Erreur France Travail:", e);
     }
 
-    const allJobs = supabaseJobs.map(function(j) {
-      return Object.assign({}, j, { _source: "kbwee" });
-    }).concat(jsearchJobs.map(function(j) {
-      return Object.assign({}, j, { _source: "external" });
-    }));
-
-    setJobs(allJobs);
+    setJobs(supabaseJobs.concat(ftJobs));
     setLoading(false);
   }
 
@@ -57,7 +52,7 @@ export default function Jobs() {
     const matchSearch =
       (job.title || "").toLowerCase().includes(search.toLowerCase()) ||
       (job.company || "").toLowerCase().includes(search.toLowerCase());
-    const matchSector = sector === "Tous" || job.sector === sector;
+    const matchSector = sector === "Tous" || (job.sector || "").includes(sector);
     const matchLocation = location === "Tous" || (job.location || "").toLowerCase().includes(location.toLowerCase());
     const matchSource = source === "tous" ||
       (source === "kbwee" && job._source === "kbwee") ||
@@ -106,11 +101,13 @@ export default function Jobs() {
             {[
               { key: "tous", label: "Toutes les offres" },
               { key: "kbwee", label: "Publiées sur Kbwee" },
-              { key: "external", label: "Sources externes" },
+              { key: "external", label: "France Travail" },
             ].map(function(s) {
               return (
                 <button key={s.key} onClick={function() { setSource(s.key); }}
-                  className={source === s.key ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900"}>
+                  className={source === s.key
+                    ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white"
+                    : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
                   {s.label}
                 </button>
               );
@@ -145,8 +142,8 @@ export default function Jobs() {
                             {job._source === "kbwee" && (
                               <span className="text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">Kbwee</span>
                             )}
-                            {job._source === "external" && job.source && (
-                              <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{job.source}</span>
+                            {job._source === "external" && (
+                              <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{job.source || "France Travail"}</span>
                             )}
                             {job.sector && (
                               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{job.sector}</span>
@@ -156,6 +153,9 @@ export default function Jobs() {
                           <p className="text-sm text-gray-500 mb-3">
                             <strong>{job.company}</strong> · {job.location} · {job.type}
                           </p>
+                          {job.salary && (
+                            <p className="text-xs text-green-600 font-medium mb-2">{job.salary}</p>
+                          )}
                           <p className="text-sm text-gray-400 font-light leading-relaxed line-clamp-2">{job.description}</p>
                         </div>
                         <div className="flex flex-col items-end gap-3 flex-shrink-0">
