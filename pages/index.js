@@ -139,13 +139,10 @@ export default function Home() {
         <h2 className="font-display text-3xl md:text-5xl font-extrabold max-w-2xl mx-auto mb-6 leading-tight">
           Prêt à transformer ta façon de recruter ?
         </h2>
-        <p className="text-gray-400 font-light mb-10">Rejoins la liste d'attente. Lancement bêta bientôt.</p>
+       <p className="text-gray-400 font-light mb-10">Rejoins la liste d'attente. Lancement bêta bientôt.</p>
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/profil" className="bg-white text-gray-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:opacity-80 transition">
-            Je cherche un emploi →
-          </Link>
-          <Link href="/post-job" className="border-2 border-gray-600 text-white px-7 py-3.5 rounded-xl text-sm font-medium hover:border-gray-400 transition">
-            Je recrute
+          <Link href="/waitlist" className="bg-white text-gray-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:opacity-80 transition">
+            Rejoindre la liste d'attente →
           </Link>
         </div>
       </section>
