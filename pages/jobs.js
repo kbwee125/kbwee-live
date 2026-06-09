@@ -70,8 +70,8 @@ export default function Jobs() {
       `}} />
 
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 h-16">
-        <Link href="/" className="font-display text-xl font-extrabold tracking-tight mr-4">Kbwee</Link>
-        <nav className="flex items-center gap-4 md:gap-8">
+        <Link href="/" className="font-display text-xl font-extrabold tracking-tight flex-shrink-0 mr-4">Kbwee</Link>
+        <nav className="flex items-center gap-3 md:gap-8">
           <Link href="/jobs" className="text-sm text-gray-900 font-semibold">Jobs</Link>
           <Link href="/post-job" className="text-sm text-gray-500 hover:text-gray-900 transition">Recruteurs</Link>
           <Link href="/login" className="text-sm bg-gray-900 text-white px-4 py-2 rounded-lg hover:opacity-80 transition">Connexion</Link>
@@ -83,33 +83,30 @@ export default function Jobs() {
           <div className="text-xs font-bold tracking-widest uppercase text-blue-600 mb-3">Offres d'emploi</div>
           <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Trouvez votre prochain poste.</h1>
           <p className="text-gray-400 font-light mb-8">Des offres vérifiées, présentées avec clarté. Juste l'essentiel.</p>
-
           <div className="flex gap-3 flex-wrap">
             <div className="flex flex-1 min-w-48 gap-2">
               <input
                 type="text"
-                placeholder="Titre, entreprise... (Appuyez Entrée pour rechercher)"
+                placeholder="Titre, entreprise... (Entrée pour rechercher)"
                 value={search}
                 onChange={function(e) { setSearch(e.target.value); }}
-                onKeyDown={function(e) {
-                  if (e.key === "Enter") fetchAllJobs(e.target.value);
-                }}
+                onKeyDown={function(e) { if (e.key === "Enter") fetchAllJobs(e.target.value); }}
                 className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
               />
-              <button
-                onClick={function() { fetchAllJobs(search); }}
-                className="bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">
+              <button onClick={function() { fetchAllJobs(search); }}
+                className="bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition flex-shrink-0">
                 Rechercher
               </button>
             </div>
-            <select value={sector} onChange={function(e) { setSector(e.target.value); }} className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
+            <select value={sector} onChange={function(e) { setSector(e.target.value); }}
+              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
               {SECTORS.map(function(s) { return <option key={s}>{s}</option>; })}
             </select>
-            <select value={location} onChange={function(e) { setLocation(e.target.value); }} className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
+            <select value={location} onChange={function(e) { setLocation(e.target.value); }}
+              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition bg-white">
               {LOCATIONS.map(function(l) { return <option key={l}>{l}</option>; })}
             </select>
           </div>
-
           <div className="flex gap-2 mt-4 flex-wrap">
             {[
               { key: "tous", label: "Toutes les offres" },
@@ -148,7 +145,9 @@ export default function Jobs() {
               ) : (
                 filtered.map(function(job) {
                   return (
-                    <div key={job.id} className={job._source === "kbwee" ? "border-2 border-blue-100 bg-blue-50 rounded-2xl p-6 hover:border-gray-900 transition" : "border-2 border-gray-100 rounded-2xl p-6 hover:border-gray-900 transition"}>
+                    <div key={job.id} className={job._source === "kbwee"
+                      ? "border-2 border-blue-100 bg-blue-50 rounded-2xl p-6 hover:border-gray-900 transition"
+                      : "border-2 border-gray-100 rounded-2xl p-6 hover:border-gray-900 transition"}>
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -173,7 +172,8 @@ export default function Jobs() {
                         </div>
                         <div className="flex flex-col items-end gap-3 flex-shrink-0">
                           <span className="text-xs text-gray-300">{timeAgo(job.created_at)}</span>
-                          <a href={job.apply_link || "#"} target="_blank" rel="noopener noreferrer" className="bg-gray-900 text-white text-sm px-5 py-2.5 rounded-xl hover:opacity-80 transition font-medium">
+                          <a href={job.apply_link || "#"} target="_blank" rel="noopener noreferrer"
+                            className="bg-gray-900 text-white text-sm px-5 py-2.5 rounded-xl hover:opacity-80 transition font-medium">
                             Postuler →
                           </a>
                         </div>
