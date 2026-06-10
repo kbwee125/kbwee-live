@@ -15,14 +15,8 @@ export default function Profil() {
       score_label: "Kbwee Score",
       score_sub: "Complétez votre profil pour améliorer votre score",
       section_info: "Informations", edit: "Modifier",
-      coming_soon: "Bientôt disponible",
-      coming_desc: "Cette fonctionnalité IA est en cours de développement. Rejoignez la liste d'attente pour y accéder en priorité.",
-      notify: "Me notifier",
       fields: { poste: "Poste recherché", secteur: "Secteur", experience: "Expérience", localisation: "Localisation", dispo: "Disponibilité", email: "Email" },
       values: { poste: "Analyste / Manager KYC · AML", secteur: "Finance · Banque · Consulting", experience: "5+ ans", localisation: "Luxembourg · Grand Est", dispo: "Ouvert aux opportunités", email: "votre@email.com" },
-      cv_title: "CV Optimizer IA", cv_desc: "Importez votre CV — Kbwee l'analyse, le restructure et vous donne un score de pertinence selon le poste visé.",
-      interview_title: "Mock Interview IA", interview_desc: "Simulez un entretien complet par IA. Questions personnalisées selon votre profil, feedback instantané, progression mesurée.",
-      match_title: "Job Match", match_desc: "Notre algorithme analyse votre profil en profondeur et vous propose uniquement les offres réellement alignées avec vos compétences.",
       logout: "Se déconnecter",
     },
     en: {
@@ -34,40 +28,13 @@ export default function Profil() {
       score_label: "Kbwee Score",
       score_sub: "Complete your profile to improve your score",
       section_info: "Information", edit: "Edit",
-      coming_soon: "Coming soon",
-      coming_desc: "This AI feature is under development. Join the waitlist to get early access.",
-      notify: "Notify me",
       fields: { poste: "Target position", secteur: "Sector", experience: "Experience", localisation: "Location", dispo: "Availability", email: "Email" },
       values: { poste: "KYC · AML Analyst / Manager", secteur: "Finance · Banking · Consulting", experience: "5+ years", localisation: "Luxembourg · Grand Est", dispo: "Open to opportunities", email: "your@email.com" },
-      cv_title: "CV Optimizer AI", cv_desc: "Upload your CV — Kbwee analyses, restructures it and gives you a relevance score for your target position.",
-      interview_title: "Mock Interview AI", interview_desc: "Simulate a full AI-powered interview. Personalised questions, instant feedback, measured progress.",
-      match_title: "Job Match", match_desc: "Our algorithm deeply analyses your profile and only suggests jobs truly aligned with your skills.",
       logout: "Sign out",
     },
   };
 
   const copy = t[lang];
-
-  function ComingSoon({ title, desc }) {
-    return (
-      <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center">
-        <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#2563EB" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </div>
-        <h3 className="font-display text-xl font-extrabold mb-2">{title}</h3>
-        <p className="text-gray-400 font-light text-sm max-w-sm mx-auto mb-6 leading-relaxed">{desc}</p>
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
-          {copy.coming_soon}
-        </div>
-        <div>
-          <button className="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">{copy.notify}</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -80,6 +47,8 @@ export default function Profil() {
         <Link href="/" className="font-display text-xl font-extrabold tracking-tight flex-shrink-0">Kbwee</Link>
         <nav className="flex items-center gap-3 md:gap-6 ml-4">
           <Link href="/jobs" className="text-sm text-gray-500 hover:text-gray-900 transition">Jobs</Link>
+          <Link href="/cv-optimizer" className="text-sm text-gray-500 hover:text-gray-900 transition">CV Optimizer</Link>
+          <Link href="/mock-interview" className="text-sm text-gray-500 hover:text-gray-900 transition">Mock Interview</Link>
           <Link href="/post-job" className="text-sm text-gray-500 hover:text-gray-900 transition">Recruteurs</Link>
           <button onClick={function() { setLang(lang === "fr" ? "en" : "fr"); }}
             className="text-xs font-medium text-gray-400 hover:text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg transition">
@@ -105,7 +74,7 @@ export default function Profil() {
               </div>
             </div>
             <div className="border border-gray-200 rounded-2xl px-6 py-4 text-center min-w-32">
-              <div className="font-display text-3xl font-extrabold text-blue-600">62</div>
+              <div className="font-display text-3xl font-extrabold text-blue-600">72</div>
               <div className="text-xs font-semibold text-gray-900 mt-0.5">{copy.score_label}</div>
               <div className="text-xs text-gray-400 mt-0.5 max-w-28">{copy.score_sub}</div>
             </div>
@@ -148,9 +117,44 @@ export default function Profil() {
             </div>
           )}
 
-          {activeTab === "cv" && <ComingSoon title={copy.cv_title} desc={copy.cv_desc} />}
-          {activeTab === "interview" && <ComingSoon title={copy.interview_title} desc={copy.interview_desc} />}
-          {activeTab === "match" && <ComingSoon title={copy.match_title} desc={copy.match_desc} />}
+          {activeTab === "cv" && (
+            <div className="border-2 border-gray-100 rounded-2xl p-12 text-center">
+              <div className="text-4xl mb-4">📄</div>
+              <h3 className="font-display text-2xl font-extrabold mb-3">CV Optimizer IA</h3>
+              <p className="text-gray-400 font-light text-sm max-w-sm mx-auto mb-8 leading-relaxed">
+                Importez votre CV — Claude l'analyse, le score et vous donne des suggestions concrètes selon le poste visé.
+              </p>
+              <Link href="/cv-optimizer" className="inline-block bg-gray-900 text-white px-8 py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                Analyser mon CV →
+              </Link>
+            </div>
+          )}
+
+          {activeTab === "interview" && (
+            <div className="border-2 border-gray-100 rounded-2xl p-12 text-center">
+              <div className="text-4xl mb-4">🎯</div>
+              <h3 className="font-display text-2xl font-extrabold mb-3">Mock Interview IA</h3>
+              <p className="text-gray-400 font-light text-sm max-w-sm mx-auto mb-8 leading-relaxed">
+                Simulez un entretien complet avec un recruteur IA. Questions personnalisées, feedback instantané, score final.
+              </p>
+              <Link href="/mock-interview" className="inline-block bg-gray-900 text-white px-8 py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                Commencer l'entretien →
+              </Link>
+            </div>
+          )}
+
+          {activeTab === "match" && (
+            <div className="border-2 border-gray-100 rounded-2xl p-12 text-center">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="font-display text-2xl font-extrabold mb-3">Job Match</h3>
+              <p className="text-gray-400 font-light text-sm max-w-sm mx-auto mb-8 leading-relaxed">
+                Des offres alignées avec votre profil réel. Pas juste des mots-clés — un vrai matching intelligent.
+              </p>
+              <Link href="/jobs" className="inline-block bg-gray-900 text-white px-8 py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                Voir les offres →
+              </Link>
+            </div>
+          )}
 
           <div className="mt-10 text-center">
             <Link href="/login" className="text-xs text-gray-300 hover:text-gray-600 transition">{copy.logout}</Link>
