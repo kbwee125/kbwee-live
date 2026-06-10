@@ -17,21 +17,42 @@ export default function CVOptimizer() {
     setResult(null);
 
     try {
-      const formData = new FormData();
-      formData.append("cv", file);
-      formData.append("jobTitle", jobTitle || "non spécifié");
+      const isText = file.name.endsWith(".txt") || file.name.endsWith(".md");
 
-      const response = await fetch("/api/cv-optimizer", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        setError(data.error);
+      if (isText) {
+        const text = await file.text();
+        const response = await fetch("/api/cv-optimizer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cvText: text,
+            isText: true,
+            jobTitle: jobTitle,
+          }),
+        });
+        const data = await response.json();
+        if (data.error) setError(data.error);
+        else setResult(data);
       } else {
-        setResult(data);
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+          const base64 = event.target.result.split(",")[1];
+          const response = await fetch("/api/cv-optimizer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cvBase64: base64,
+              isText: false,
+              jobTitle: jobTitle,
+            }),
+          });
+          const data = await response.json();
+          if (data.error) setError(data.error);
+          else setResult(data);
+          setLoading(false);
+        };
+        reader.readAsDataURL(file);
+        return;
       }
     } catch (e) {
       setError("Une erreur est survenue. Réessayez.");
