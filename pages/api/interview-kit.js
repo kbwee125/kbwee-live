@@ -1,18 +1,19 @@
 export const config = {
-  api: {
-    bodyParser: { sizeLimit: "1mb" },
-    responseLimit: false,
-  },
-  maxDuration: 30,
+  runtime: "edge",
 };
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  const { jobTitle, company, sector } = req.body;
-  if (!jobTitle) return res.status(400).json({ error: "Poste manquant" });
+export default async function handler(req) {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
+  }
 
   try {
+    const { jobTitle, company, sector } = await req.json();
+
+    if (!jobTitle) {
+      return new Response(JSON.stringify({ error: "Poste manquant" }), { status: 400 });
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -25,42 +26,49 @@ export default async function handler(req, res) {
         max_tokens: 1500,
         messages: [{
           role: "user",
-          content: `Expert RH. Grille d'entretien pour : ${jobTitle}${company ? " chez " + company : ""}${sector ? ", secteur " + sector : ""}.
+          content: `Expert RH. Grille entretien pour : ${jobTitle}${company ? " chez " + company : ""}${sector ? ", secteur " + sector : ""}.
 
-JSON uniquement, sans texte avant ou après :
+JSON uniquement sans texte avant ou après :
 {
   "title": "<titre>",
-  "duration": "<durée>",
+  "duration": "<durée recommandée>",
   "sections": [
     {
-      "name": "<section>",
+      "name": "<nom section>",
       "duration": "<durée>",
       "questions": [
         {
           "question": "<question>",
-          "objective": "<objectif>",
-          "goodAnswer": "<bonne réponse>",
+          "objective": "<ce qu on évalue>",
+          "goodAnswer": "<éléments bonne réponse>",
           "redFlag": "<signal alerte>"
         }
       ]
     }
   ],
   "evaluationCriteria": ["<critère 1>", "<critère 2>", "<critère 3>"],
-  "recommendation": "<conseil>"
+  "recommendation": "<conseil global>"
 }
-
-3 sections max, 3 questions par section.`,
+3 sections maximum, 3 questions par section.`,
         }],
       }),
     });
 
     const data = await response.json();
-    if (!data.content || !data.content[0]) return res.status(500).json({ error: "Réponse invalide" });
+
+    if (!data.content || !data.content[0]) {
+      return new Response(JSON.stringify({ error: "Réponse invalide", debug: data }), { status: 500 });
+    }
 
     const text = data.content[0].text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(text);
-    res.status(200).json(parsed);
+
+    return new Response(JSON.stringify(parsed), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
