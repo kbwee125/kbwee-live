@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 export default function MockInterview() {
@@ -12,6 +12,52 @@ export default function MockInterview() {
   const [error, setError] = useState("");
   const [questionNumber, setQuestionNumber] = useState(0);
   const [finalReport, setFinalReport] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [micSupported, setMicSupported] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(function() {
+    if (typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+      setMicSupported(true);
+    }
+  }, []);
+
+  function toggleMic() {
+    if (!micSupported) return;
+
+    if (isRecording) {
+      recognitionRef.current && recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = function(event) {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setUserAnswer(transcript);
+    };
+
+    recognition.onend = function() {
+      setIsRecording(false);
+    };
+
+    recognition.onerror = function() {
+      setIsRecording(false);
+      setError("Microphone non accessible. Vérifiez les permissions.");
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsRecording(true);
+  }
 
   async function startInterview() {
     if (!jobTitle) return;
@@ -39,31 +85,22 @@ export default function MockInterview() {
 
   async function submitAnswer() {
     if (!userAnswer.trim()) return;
+    if (isRecording) { recognitionRef.current && recognitionRef.current.stop(); setIsRecording(false); }
     setLoading(true);
     setError("");
 
-    const newMessages = [
-      ...messages,
-      { role: "user", content: userAnswer },
-    ];
+    const newMessages = [...messages, { role: "user", content: userAnswer }];
 
     try {
       const response = await fetch("/api/mock-interview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobTitle, company, action: "answer",
-          messages: newMessages,
-        }),
+        body: JSON.stringify({ jobTitle, company, action: "answer", messages: newMessages }),
       });
       const data = await response.json();
       if (data.error) { setError(data.error); setLoading(false); return; }
 
-      const updatedMessages = [
-        ...newMessages,
-        { role: "assistant", content: JSON.stringify(data) },
-      ];
-
+      const updatedMessages = [...newMessages, { role: "assistant", content: JSON.stringify(data) }];
       setMessages(updatedMessages);
       setUserAnswer("");
 
@@ -82,15 +119,12 @@ export default function MockInterview() {
 
   const conversationHistory = messages.filter(function(m) {
     if (m.role === "user") return true;
-    try {
-      const parsed = JSON.parse(m.content);
-      return parsed.feedback || parsed.question;
-    } catch { return false; }
+    try { const p = JSON.parse(m.content); return p.feedback || p.question; } catch { return false; }
   }).map(function(m) {
     if (m.role === "user") return { role: "user", text: m.content };
     try {
-      const parsed = JSON.parse(m.content);
-      return { role: "assistant", feedback: parsed.feedback, score: parsed.score, question: parsed.question || parsed.nextQuestion };
+      const p = JSON.parse(m.content);
+      return { role: "assistant", feedback: p.feedback, score: p.score, question: p.question || p.nextQuestion };
     } catch { return null; }
   }).filter(Boolean);
 
@@ -99,6 +133,8 @@ export default function MockInterview() {
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
         .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+        .recording-pulse::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: #ef4444; animation: pulse-ring 1s infinite; }
       `}} />
 
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 h-16">
@@ -125,31 +161,23 @@ export default function MockInterview() {
                 </div>
                 <h1 className="font-display text-4xl font-extrabold tracking-tight mb-3">Mock Interview</h1>
                 <p className="text-gray-400 font-light max-w-md mx-auto">
-                  Entraînez-vous avec un recruteur IA. Questions personnalisées, feedback instantané, score final.
+                  Entraînez-vous avec un recruteur IA. Répondez à l'écrit ou à la voix 🎤
                 </p>
               </div>
 
               <div className="border border-gray-200 rounded-2xl p-8 space-y-5">
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-2 block">Poste visé *</label>
-                  <input
-                    type="text"
-                    placeholder="ex. Analyste KYC Senior, Product Manager, Développeur Full Stack..."
-                    value={jobTitle}
-                    onChange={function(e) { setJobTitle(e.target.value); }}
+                  <input type="text" placeholder="ex. Analyste KYC Senior, Product Manager..."
+                    value={jobTitle} onChange={function(e) { setJobTitle(e.target.value); }}
                     onKeyDown={function(e) { if (e.key === "Enter" && jobTitle) startInterview(); }}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                  />
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-2 block">Entreprise (optionnel)</label>
-                  <input
-                    type="text"
-                    placeholder="ex. Goldman Sachs, BNP Paribas, Google..."
-                    value={company}
-                    onChange={function(e) { setCompany(e.target.value); }}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
-                  />
+                  <input type="text" placeholder="ex. Goldman Sachs, BNP Paribas..."
+                    value={company} onChange={function(e) { setCompany(e.target.value); }}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                 </div>
 
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -158,13 +186,12 @@ export default function MockInterview() {
                     {[
                       "Claude joue le rôle d'un recruteur senior",
                       "5 questions progressives personnalisées",
-                      "Feedback immédiat après chaque réponse",
-                      "Score final + rapport détaillé"
+                      "Répondez à l'écrit ou activez le micro 🎤",
+                      "Feedback immédiat + score final détaillé"
                     ].map(function(item, i) {
                       return (
                         <li key={i} className="flex items-center gap-2 text-xs text-gray-500">
-                          <span className="text-blue-600 font-bold">✓</span>
-                          {item}
+                          <span className="text-blue-600 font-bold">✓</span>{item}
                         </li>
                       );
                     })}
@@ -173,14 +200,12 @@ export default function MockInterview() {
 
                 {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
-                <button
-                  onClick={startInterview}
-                  disabled={!jobTitle || loading}
+                <button onClick={startInterview} disabled={!jobTitle || loading}
                   className="w-full bg-gray-900 text-white py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-40">
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Préparation de l'entretien...
+                      Préparation...
                     </span>
                   ) : "Commencer l'entretien →"}
                 </button>
@@ -202,12 +227,8 @@ export default function MockInterview() {
                 </div>
               </div>
 
-              {/* Barre de progression */}
               <div className="w-full bg-gray-100 rounded-full h-1.5 mb-8">
-                <div
-                  className="bg-blue-600 h-1.5 rounded-full transition-all"
-                  style={{ width: (questionNumber / 5 * 100) + "%" }}>
-                </div>
+                <div className="bg-blue-600 h-1.5 rounded-full transition-all" style={{ width: (questionNumber / 5 * 100) + "%" }}></div>
               </div>
 
               {/* Historique */}
@@ -217,21 +238,17 @@ export default function MockInterview() {
                     if (item.role === "user") {
                       return (
                         <div key={i} className="flex justify-end">
-                          <div className="bg-gray-900 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-lg text-sm">
-                            {item.text}
-                          </div>
+                          <div className="bg-gray-900 text-white rounded-2xl rounded-tr-sm px-5 py-3 max-w-lg text-sm">{item.text}</div>
                         </div>
                       );
                     }
                     return (
-                      <div key={i} className="space-y-2">
+                      <div key={i}>
                         {item.feedback && (
                           <div className="bg-blue-50 border border-blue-100 rounded-2xl rounded-tl-sm px-5 py-3 max-w-lg">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs font-bold text-blue-600">Feedback</span>
-                              {item.score && (
-                                <span className="text-xs font-bold text-blue-600">{item.score}/10</span>
-                              )}
+                              {item.score && <span className="text-xs font-bold text-blue-600">{item.score}/10</span>}
                             </div>
                             <p className="text-sm text-blue-800">{item.feedback}</p>
                           </div>
@@ -254,21 +271,51 @@ export default function MockInterview() {
                 </p>
               </div>
 
-              {/* Réponse */}
+              {/* Zone réponse + micro */}
               <div className="space-y-3">
-                <textarea
-                  placeholder="Tapez votre réponse ici..."
-                  value={userAnswer}
-                  onChange={function(e) { setUserAnswer(e.target.value); }}
-                  rows={5}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none"
-                />
+                <div className="relative">
+                  <textarea
+                    placeholder={isRecording ? "🎤 Parlez maintenant — transcription en cours..." : "Tapez votre réponse ou cliquez sur le micro 🎤"}
+                    value={userAnswer}
+                    onChange={function(e) { setUserAnswer(e.target.value); }}
+                    rows={5}
+                    className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none pr-14 ${
+                      isRecording ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-gray-900"
+                    }`}
+                  />
+                  {micSupported && (
+                    <button
+                      onClick={toggleMic}
+                      type="button"
+                      className={`absolute right-3 top-3 w-9 h-9 rounded-full flex items-center justify-center transition relative ${
+                        isRecording
+                          ? "bg-red-500 text-white recording-pulse"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}>
+                      {isRecording ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="6" y="6" width="12" height="12" rx="2"/>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {isRecording && (
+                  <div className="flex items-center gap-2 text-xs text-red-500 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block"></span>
+                    Enregistrement en cours — cliquez sur ⏹ pour arrêter
+                  </div>
+                )}
 
                 {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
-                <button
-                  onClick={submitAnswer}
-                  disabled={!userAnswer.trim() || loading}
+                <button onClick={submitAnswer} disabled={!userAnswer.trim() || loading}
                   className="w-full bg-gray-900 text-white py-3.5 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-40">
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -286,7 +333,7 @@ export default function MockInterview() {
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <h1 className="font-display text-3xl font-extrabold mb-2">Entretien terminé !</h1>
-                <p className="text-gray-400 font-light">Voici votre bilan pour le poste de {jobTitle}</p>
+                <p className="text-gray-400 font-light">Voici votre bilan pour le poste de {jobTitle}{company ? " chez " + company : ""}</p>
               </div>
 
               <div className="border border-gray-200 rounded-2xl p-8 text-center">
@@ -297,9 +344,7 @@ export default function MockInterview() {
               </div>
 
               <div className="border border-gray-200 rounded-2xl p-8">
-                <h2 className="font-display text-xl font-extrabold mb-4">
-                  <span className="text-green-500">✓</span> Points forts
-                </h2>
+                <h2 className="font-display text-xl font-extrabold mb-4"><span className="text-green-500">✓</span> Points forts</h2>
                 <ul className="space-y-3">
                   {(finalReport.strengths || []).map(function(item, i) {
                     return (
@@ -313,9 +358,7 @@ export default function MockInterview() {
               </div>
 
               <div className="border border-gray-200 rounded-2xl p-8">
-                <h2 className="font-display text-xl font-extrabold mb-4">
-                  <span className="text-orange-500">↑</span> Axes d'amélioration
-                </h2>
+                <h2 className="font-display text-xl font-extrabold mb-4"><span className="text-orange-500">↑</span> Axes d'amélioration</h2>
                 <ul className="space-y-3">
                   {(finalReport.improvements || []).map(function(item, i) {
                     return (
@@ -330,7 +373,7 @@ export default function MockInterview() {
 
               <div className="flex gap-3 flex-wrap">
                 <button
-                  onClick={function() { setStep("setup"); setMessages([]); setFinalReport(null); setJobTitle(""); setCompany(""); }}
+                  onClick={function() { setStep("setup"); setMessages([]); setFinalReport(null); setJobTitle(""); setCompany(""); setUserAnswer(""); }}
                   className="flex-1 border-2 border-gray-200 text-gray-900 py-3 rounded-xl text-sm font-medium hover:border-gray-900 transition">
                   Nouvel entretien
                 </button>
