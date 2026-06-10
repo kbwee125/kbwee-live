@@ -185,4 +185,307 @@ export default function RecruiterDashboard() {
                       { label: "Offres publiées", value: data?.stats?.totalJobs || 0, color: "text-gray-900" },
                       { label: "Candidatures", value: data?.stats?.totalApplications || 0, color: "text-blue-600" },
                       { label: "En attente", value: data?.stats?.pending || 0, color: "text-orange-500" },
-                      { label: "Retenus", value: data?.stats?.accepted || 0, color: "te
+                      { label: "Retenus", value: data?.stats?.accepted || 0, color: "text-green-600" },
+                    ].map(function(stat, i) {
+                      return (
+                        <div key={i} className="border border-gray-200 rounded-2xl p-6 text-center">
+                          <div className={"font-display text-4xl font-extrabold mb-1 " + stat.color}>{stat.value}</div>
+                          <div className="text-xs text-gray-400">{stat.label}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Dernières candidatures */}
+                  <div className="border border-gray-200 rounded-2xl p-6">
+                    <h2 className="font-display text-lg font-extrabold mb-4">Dernières candidatures</h2>
+                    {(data?.applications || []).length === 0 ? (
+                      <p className="text-gray-400 text-sm font-light text-center py-8">Aucune candidature pour le moment.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {(data?.applications || []).slice(0, 5).map(function(app) {
+                          const job = (data?.jobs || []).find(function(j) { return j.id === app.job_id; });
+                          return (
+                            <div key={app.id} className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
+                              <div>
+                                <p className="text-sm font-medium">{app.candidate_name}</p>
+                                <p className="text-xs text-gray-400">{job ? job.title : "Offre supprimée"} · {timeAgo(app.created_at)}</p>
+                              </div>
+                              <span className={"text-xs font-medium px-2 py-1 rounded-full " + statusColor(app.status)}>
+                                {statusLabel(app.status)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* MES OFFRES */}
+              {activeTab === "jobs" && (
+                <div className="space-y-4">
+                  {(data?.jobs || []).length === 0 ? (
+                    <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-gray-400 mb-4">Aucune offre publiée avec cet email.</p>
+                      <Link href="/post-job" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition">
+                        Publier ma première offre →
+                      </Link>
+                    </div>
+                  ) : (
+                    (data?.jobs || []).map(function(job) {
+                      const appCount = (data?.applications || []).filter(function(a) { return a.job_id === job.id; }).length;
+                      return (
+                        <div key={job.id} className="border border-gray-200 rounded-2xl p-6 hover:border-gray-900 transition">
+                          <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div className="flex-1">
+                              <h3 className="font-display text-lg font-bold mb-1">{job.title}</h3>
+                              <p className="text-sm text-gray-500 mb-3">{job.company} · {job.location} · {job.type}</p>
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                  {appCount} candidature{appCount > 1 ? "s" : ""}
+                                </span>
+                                <span className="text-xs text-gray-400">{timeAgo(job.created_at)}</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={function() { setSelectedJob(job.id); setActiveTab("applications"); }}
+                                className="text-xs border border-gray-200 px-3 py-2 rounded-lg hover:border-gray-900 transition">
+                                Voir candidatures
+                              </button>
+                              <button
+                                onClick={function() { deleteJob(job.id); }}
+                                className="text-xs border border-red-200 text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition">
+                                Supprimer
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* CANDIDATURES */}
+              {activeTab === "applications" && (
+                <div>
+                  {/* Filtre par offre */}
+                  <div className="flex gap-2 flex-wrap mb-6">
+                    <button
+                      onClick={function() { setSelectedJob(null); }}
+                      className={!selectedJob ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
+                      Toutes
+                    </button>
+                    {(data?.jobs || []).map(function(job) {
+                      return (
+                        <button key={job.id}
+                          onClick={function() { setSelectedJob(job.id); }}
+                          className={selectedJob === job.id ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
+                          {job.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Liste candidatures */}
+                  {(selectedJob ? jobApplications : data?.applications || []).length === 0 ? (
+                    <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
+                      <p className="text-gray-400">Aucune candidature pour le moment.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(selectedJob ? jobApplications : data?.applications || []).map(function(app) {
+                        const job = (data?.jobs || []).find(function(j) { return j.id === app.job_id; });
+                        return (
+                          <div key={app.id} className="border border-gray-200 rounded-2xl p-6">
+                            <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+                              <div>
+                                <h3 className="font-display text-lg font-bold">{app.candidate_name}</h3>
+                                <p className="text-sm text-gray-400">{app.candidate_email}{app.candidate_phone ? " · " + app.candidate_phone : ""}</p>
+                                {job && <p className="text-xs text-blue-600 mt-1 font-medium">{job.title}</p>}
+                                <p className="text-xs text-gray-300 mt-1">{timeAgo(app.created_at)}</p>
+                              </div>
+                              <span className={"text-xs font-medium px-3 py-1.5 rounded-full " + statusColor(app.status)}>
+                                {statusLabel(app.status)}
+                              </span>
+                            </div>
+
+                            {app.cover_letter && (
+                              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                <p className="text-xs font-medium text-gray-500 mb-2">Lettre de motivation</p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{app.cover_letter}</p>
+                              </div>
+                            )}
+
+                            <div className="flex gap-2 flex-wrap">
+                              {["pending", "reviewed", "accepted", "rejected"].map(function(status) {
+                                return (
+                                  <button key={status}
+                                    onClick={function() { updateStatus(app.id, status); }}
+                                    className={app.status === status
+                                      ? "text-xs px-3 py-1.5 rounded-lg font-medium bg-gray-900 text-white"
+                                      : "text-xs px-3 py-1.5 rounded-lg font-medium border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
+                                    {statusLabel(status)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* OUTILS IA */}
+              {activeTab === "tools" && (
+                <div className="space-y-8">
+
+                  {/* Interview Kit */}
+                  <div className="border border-gray-200 rounded-2xl p-8">
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="text-3xl">📋</div>
+                      <div>
+                        <h2 className="font-display text-xl font-extrabold mb-1">Interview Kit IA</h2>
+                        <p className="text-gray-400 font-light text-sm">Générez une grille d'entretien complète et structurée par poste en quelques secondes.</p>
+                      </div>
+                    </div>
+
+                    {!kit ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Poste *</label>
+                            <input type="text" placeholder="ex. Analyste KYC"
+                              value={kitJob} onChange={function(e) { setKitJob(e.target.value); }}
+                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Entreprise</label>
+                            <input type="text" placeholder="ex. Goldman Sachs"
+                              value={kitCompany} onChange={function(e) { setKitCompany(e.target.value); }}
+                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">Secteur</label>
+                            <input type="text" placeholder="ex. Finance, Tech..."
+                              value={kitSector} onChange={function(e) { setKitSector(e.target.value); }}
+                              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
+                          </div>
+                        </div>
+                        <button onClick={generateKit} disabled={!kitJob || kitLoading}
+                          className="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-40">
+                          {kitLoading ? (
+                            <span className="flex items-center gap-2">
+                              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                              Claude génère la grille...
+                            </span>
+                          ) : "Générer la grille d'entretien →"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-display text-lg font-bold">{kit.title}</h3>
+                            <p className="text-xs text-gray-400">Durée recommandée : {kit.duration}</p>
+                          </div>
+                          <button onClick={function() { setKit(null); setKitJob(""); setKitCompany(""); setKitSector(""); }}
+                            className="text-xs border border-gray-200 px-3 py-2 rounded-lg hover:border-gray-900 transition">
+                            Nouvelle grille
+                          </button>
+                        </div>
+
+                        {(kit.sections || []).map(function(section, si) {
+                          return (
+                            <div key={si} className="border border-gray-100 rounded-xl p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h4 className="font-display text-base font-bold">{section.name}</h4>
+                                <span className="text-xs text-gray-400">{section.duration}</span>
+                              </div>
+                              <div className="space-y-4">
+                                {(section.questions || []).map(function(q, qi) {
+                                  return (
+                                    <div key={qi} className="bg-gray-50 rounded-xl p-4">
+                                      <p className="text-sm font-medium mb-3">{q.question}</p>
+                                      <div className="grid md:grid-cols-3 gap-3">
+                                        <div>
+                                          <p className="text-xs font-bold text-gray-400 mb-1">Objectif</p>
+                                          <p className="text-xs text-gray-600">{q.objective}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-bold text-green-600 mb-1">✓ Bonne réponse</p>
+                                          <p className="text-xs text-gray-600">{q.goodAnswer}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-xs font-bold text-red-500 mb-1">⚠ Signal d'alerte</p>
+                                          <p className="text-xs text-gray-600">{q.redFlag}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {kit.evaluationCriteria && (
+                          <div className="border border-blue-100 bg-blue-50 rounded-xl p-4">
+                            <p className="text-xs font-bold text-blue-600 mb-2">Critères d'évaluation</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {kit.evaluationCriteria.map(function(c, i) {
+                                return <span key={i} className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-1 rounded-full">{c}</span>;
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {kit.recommendation && (
+                          <div className="border border-gray-200 rounded-xl p-4">
+                            <p className="text-xs font-bold text-gray-500 mb-2">Conseil du recruteur IA</p>
+                            <p className="text-sm text-gray-700">{kit.recommendation}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bias Checker — Coming Soon */}
+                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+                    <div className="text-3xl mb-3">⚖️</div>
+                    <h2 className="font-display text-xl font-extrabold mb-2">Bias Checker</h2>
+                    <p className="text-gray-400 font-light text-sm mb-4">Analysez vos offres d'emploi pour détecter les biais inconscients et rendre votre recrutement plus équitable.</p>
+                    <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
+                      Bientôt disponible
+                    </span>
+                  </div>
+
+                  {/* Fit Score — Coming Soon */}
+                  <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
+                    <div className="text-3xl mb-3">🎯</div>
+                    <h2 className="font-display text-xl font-extrabold mb-2">Fit Score</h2>
+                    <p className="text-gray-400 font-light text-sm mb-4">Évaluez automatiquement la compatibilité entre un candidat et un poste grâce à l'IA.</p>
+                    <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
+                      Bientôt disponible
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <footer className="border-t border-gray-200 px-8 py-4 text-center">
+        <p className="text-xs text-gray-300">© 2026 Kbwee</p>
+      </footer>
+    </div>
+  );
+}
