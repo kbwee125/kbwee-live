@@ -58,16 +58,40 @@ export default function RecruiterDashboard() {
     if (!kitJob) return;
     setKitLoading(true);
     setKit(null);
+    setError("");
     try {
-      const res = await fetch("/api/interview-kit", {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobTitle: kitJob, company: kitCompany, sector: kitSector }),
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1500,
+          messages: [{
+            role: "user",
+            content: `Expert RH. Grille entretien pour : ${kitJob}${kitCompany ? " chez " + kitCompany : ""}${kitSector ? ", secteur " + kitSector : ""}.
+
+JSON uniquement :
+{
+  "title": "<titre>",
+  "duration": "<durée>",
+  "sections": [{"name": "<section>", "duration": "<durée>", "questions": [{"question": "<question>", "objective": "<objectif>", "goodAnswer": "<bonne réponse>", "redFlag": "<signal alerte>"}]}],
+  "evaluationCriteria": ["<critère 1>", "<critère 2>", "<critère 3>"],
+  "recommendation": "<conseil>"
+}
+3 sections, 3 questions chacune.`,
+          }],
+        }),
       });
-      const json = await res.json();
-      if (json.error) { setError(json.error); } else { setKit(json); }
+      const data = await response.json();
+      if (!data.content || !data.content[0]) { setError("Réponse invalide"); setKitLoading(false); return; }
+      const text = data.content[0].text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(text);
+      setKit(parsed);
     } catch (e) {
-      setError("Erreur lors de la génération.");
+      setError("Erreur : " + e.message);
     }
     setKitLoading(false);
   }
