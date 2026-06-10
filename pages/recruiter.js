@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 
 export default function RecruiterDashboard() {
@@ -60,36 +60,17 @@ export default function RecruiterDashboard() {
     setKit(null);
     setError("");
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/interview-kit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1500,
-          messages: [{
-            role: "user",
-            content: `Expert RH. Grille entretien pour : ${kitJob}${kitCompany ? " chez " + kitCompany : ""}${kitSector ? ", secteur " + kitSector : ""}.
-
-JSON uniquement :
-{
-  "title": "<titre>",
-  "duration": "<durée>",
-  "sections": [{"name": "<section>", "duration": "<durée>", "questions": [{"question": "<question>", "objective": "<objectif>", "goodAnswer": "<bonne réponse>", "redFlag": "<signal alerte>"}]}],
-  "evaluationCriteria": ["<critère 1>", "<critère 2>", "<critère 3>"],
-  "recommendation": "<conseil>"
-}
-3 sections, 3 questions chacune.`,
-          }],
+          jobTitle: kitJob,
+          company: kitCompany,
+          sector: kitSector,
         }),
       });
-      const data = await response.json();
-      if (!data.content || !data.content[0]) { setError("Réponse invalide"); setKitLoading(false); return; }
-      const text = data.content[0].text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(text);
-      setKit(parsed);
+      const json = await res.json();
+      if (json.error) { setError(json.error); } else { setKit(json); }
     } catch (e) {
       setError("Erreur : " + e.message);
     }
@@ -142,7 +123,6 @@ JSON uniquement :
       <main className="flex-grow pt-24 pb-20 px-6">
         <div className="max-w-5xl mx-auto">
 
-          {/* LOGIN RECRUTEUR */}
           {!email ? (
             <div className="max-w-md mx-auto pt-10">
               <div className="text-center mb-10">
@@ -171,7 +151,6 @@ JSON uniquement :
             </div>
           ) : (
             <div>
-              {/* HEADER DASHBOARD */}
               <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
                 <div>
                   <h1 className="font-display text-3xl font-extrabold">Dashboard Recruteur</h1>
@@ -182,7 +161,6 @@ JSON uniquement :
                 </Link>
               </div>
 
-              {/* TABS */}
               <div className="flex gap-1 border-b border-gray-200 mb-8 overflow-x-auto">
                 {[
                   { key: "overview", label: "Vue d'ensemble" },
@@ -201,7 +179,6 @@ JSON uniquement :
                 })}
               </div>
 
-              {/* VUE D'ENSEMBLE */}
               {activeTab === "overview" && (
                 <div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -219,8 +196,6 @@ JSON uniquement :
                       );
                     })}
                   </div>
-
-                  {/* Dernières candidatures */}
                   <div className="border border-gray-200 rounded-2xl p-6">
                     <h2 className="font-display text-lg font-extrabold mb-4">Dernières candidatures</h2>
                     {(data?.applications || []).length === 0 ? (
@@ -235,9 +210,7 @@ JSON uniquement :
                                 <p className="text-sm font-medium">{app.candidate_name}</p>
                                 <p className="text-xs text-gray-400">{job ? job.title : "Offre supprimée"} · {timeAgo(app.created_at)}</p>
                               </div>
-                              <span className={"text-xs font-medium px-2 py-1 rounded-full " + statusColor(app.status)}>
-                                {statusLabel(app.status)}
-                              </span>
+                              <span className={"text-xs font-medium px-2 py-1 rounded-full " + statusColor(app.status)}>{statusLabel(app.status)}</span>
                             </div>
                           );
                         })}
@@ -247,7 +220,6 @@ JSON uniquement :
                 </div>
               )}
 
-              {/* MES OFFRES */}
               {activeTab === "jobs" && (
                 <div className="space-y-4">
                   {(data?.jobs || []).length === 0 ? (
@@ -267,20 +239,16 @@ JSON uniquement :
                               <h3 className="font-display text-lg font-bold mb-1">{job.title}</h3>
                               <p className="text-sm text-gray-500 mb-3">{job.company} · {job.location} · {job.type}</p>
                               <div className="flex items-center gap-3 flex-wrap">
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                  {appCount} candidature{appCount > 1 ? "s" : ""}
-                                </span>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">{appCount} candidature{appCount > 1 ? "s" : ""}</span>
                                 <span className="text-xs text-gray-400">{timeAgo(job.created_at)}</span>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button
-                                onClick={function() { setSelectedJob(job.id); setActiveTab("applications"); }}
+                              <button onClick={function() { setSelectedJob(job.id); setActiveTab("applications"); }}
                                 className="text-xs border border-gray-200 px-3 py-2 rounded-lg hover:border-gray-900 transition">
                                 Voir candidatures
                               </button>
-                              <button
-                                onClick={function() { deleteJob(job.id); }}
+                              <button onClick={function() { deleteJob(job.id); }}
                                 className="text-xs border border-red-200 text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition">
                                 Supprimer
                               </button>
@@ -293,28 +261,22 @@ JSON uniquement :
                 </div>
               )}
 
-              {/* CANDIDATURES */}
               {activeTab === "applications" && (
                 <div>
-                  {/* Filtre par offre */}
                   <div className="flex gap-2 flex-wrap mb-6">
-                    <button
-                      onClick={function() { setSelectedJob(null); }}
+                    <button onClick={function() { setSelectedJob(null); }}
                       className={!selectedJob ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
                       Toutes
                     </button>
                     {(data?.jobs || []).map(function(job) {
                       return (
-                        <button key={job.id}
-                          onClick={function() { setSelectedJob(job.id); }}
+                        <button key={job.id} onClick={function() { setSelectedJob(job.id); }}
                           className={selectedJob === job.id ? "text-xs px-4 py-2 rounded-full font-medium bg-gray-900 text-white" : "text-xs px-4 py-2 rounded-full font-medium bg-white border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
                           {job.title}
                         </button>
                       );
                     })}
                   </div>
-
-                  {/* Liste candidatures */}
                   {(selectedJob ? jobApplications : data?.applications || []).length === 0 ? (
                     <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
                       <p className="text-gray-400">Aucune candidature pour le moment.</p>
@@ -332,23 +294,18 @@ JSON uniquement :
                                 {job && <p className="text-xs text-blue-600 mt-1 font-medium">{job.title}</p>}
                                 <p className="text-xs text-gray-300 mt-1">{timeAgo(app.created_at)}</p>
                               </div>
-                              <span className={"text-xs font-medium px-3 py-1.5 rounded-full " + statusColor(app.status)}>
-                                {statusLabel(app.status)}
-                              </span>
+                              <span className={"text-xs font-medium px-3 py-1.5 rounded-full " + statusColor(app.status)}>{statusLabel(app.status)}</span>
                             </div>
-
                             {app.cover_letter && (
                               <div className="bg-gray-50 rounded-xl p-4 mb-4">
                                 <p className="text-xs font-medium text-gray-500 mb-2">Lettre de motivation</p>
                                 <p className="text-sm text-gray-700 leading-relaxed">{app.cover_letter}</p>
                               </div>
                             )}
-
                             <div className="flex gap-2 flex-wrap">
                               {["pending", "reviewed", "accepted", "rejected"].map(function(status) {
                                 return (
-                                  <button key={status}
-                                    onClick={function() { updateStatus(app.id, status); }}
+                                  <button key={status} onClick={function() { updateStatus(app.id, status); }}
                                     className={app.status === status
                                       ? "text-xs px-3 py-1.5 rounded-lg font-medium bg-gray-900 text-white"
                                       : "text-xs px-3 py-1.5 rounded-lg font-medium border border-gray-200 text-gray-500 hover:border-gray-900 transition"}>
@@ -365,20 +322,16 @@ JSON uniquement :
                 </div>
               )}
 
-              {/* OUTILS IA */}
               {activeTab === "tools" && (
                 <div className="space-y-8">
-
-                  {/* Interview Kit */}
                   <div className="border border-gray-200 rounded-2xl p-8">
                     <div className="flex items-start gap-4 mb-6">
                       <div className="text-3xl">📋</div>
                       <div>
                         <h2 className="font-display text-xl font-extrabold mb-1">Interview Kit IA</h2>
-                        <p className="text-gray-400 font-light text-sm">Générez une grille d'entretien complète et structurée par poste en quelques secondes.</p>
+                        <p className="text-gray-400 font-light text-sm">Générez une grille d'entretien complète et structurée par poste.</p>
                       </div>
                     </div>
-
                     {!kit ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -396,11 +349,12 @@ JSON uniquement :
                           </div>
                           <div>
                             <label className="text-xs font-medium text-gray-500 mb-1.5 block">Secteur</label>
-                            <input type="text" placeholder="ex. Finance, Tech..."
+                            <input type="text" placeholder="ex. Finance"
                               value={kitSector} onChange={function(e) { setKitSector(e.target.value); }}
                               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"/>
                           </div>
                         </div>
+                        {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>}
                         <button onClick={generateKit} disabled={!kitJob || kitLoading}
                           className="bg-gray-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-40">
                           {kitLoading ? (
@@ -416,14 +370,13 @@ JSON uniquement :
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="font-display text-lg font-bold">{kit.title}</h3>
-                            <p className="text-xs text-gray-400">Durée recommandée : {kit.duration}</p>
+                            <p className="text-xs text-gray-400">Durée : {kit.duration}</p>
                           </div>
                           <button onClick={function() { setKit(null); setKitJob(""); setKitCompany(""); setKitSector(""); }}
                             className="text-xs border border-gray-200 px-3 py-2 rounded-lg hover:border-gray-900 transition">
                             Nouvelle grille
                           </button>
                         </div>
-
                         {(kit.sections || []).map(function(section, si) {
                           return (
                             <div key={si} className="border border-gray-100 rounded-xl p-6">
@@ -446,7 +399,7 @@ JSON uniquement :
                                           <p className="text-xs text-gray-600">{q.goodAnswer}</p>
                                         </div>
                                         <div>
-                                          <p className="text-xs font-bold text-red-500 mb-1">⚠ Signal d'alerte</p>
+                                          <p className="text-xs font-bold text-red-500 mb-1">⚠ Signal alerte</p>
                                           <p className="text-xs text-gray-600">{q.redFlag}</p>
                                         </div>
                                       </div>
@@ -457,7 +410,6 @@ JSON uniquement :
                             </div>
                           );
                         })}
-
                         {kit.evaluationCriteria && (
                           <div className="border border-blue-100 bg-blue-50 rounded-xl p-4">
                             <p className="text-xs font-bold text-blue-600 mb-2">Critères d'évaluation</p>
@@ -468,7 +420,6 @@ JSON uniquement :
                             </div>
                           </div>
                         )}
-
                         {kit.recommendation && (
                           <div className="border border-gray-200 rounded-xl p-4">
                             <p className="text-xs font-bold text-gray-500 mb-2">Conseil du recruteur IA</p>
@@ -479,22 +430,20 @@ JSON uniquement :
                     )}
                   </div>
 
-                  {/* Bias Checker — Coming Soon */}
                   <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
                     <div className="text-3xl mb-3">⚖️</div>
                     <h2 className="font-display text-xl font-extrabold mb-2">Bias Checker</h2>
-                    <p className="text-gray-400 font-light text-sm mb-4">Analysez vos offres d'emploi pour détecter les biais inconscients et rendre votre recrutement plus équitable.</p>
+                    <p className="text-gray-400 font-light text-sm mb-4">Analysez vos offres pour détecter les biais inconscients.</p>
                     <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
                       Bientôt disponible
                     </span>
                   </div>
 
-                  {/* Fit Score — Coming Soon */}
                   <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
                     <div className="text-3xl mb-3">🎯</div>
                     <h2 className="font-display text-xl font-extrabold mb-2">Fit Score</h2>
-                    <p className="text-gray-400 font-light text-sm mb-4">Évaluez automatiquement la compatibilité entre un candidat et un poste grâce à l'IA.</p>
+                    <p className="text-gray-400 font-light text-sm mb-4">Évaluez la compatibilité candidat ↔ poste par IA.</p>
                     <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
                       Bientôt disponible
