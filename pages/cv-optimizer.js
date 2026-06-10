@@ -17,34 +17,27 @@ export default function CVOptimizer() {
     setResult(null);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async function(event) {
-        const base64 = event.target.result.split(",")[1];
+      const formData = new FormData();
+      formData.append("cv", file);
+      formData.append("jobTitle", jobTitle || "non spécifié");
 
-        const response = await fetch("/api/cv-optimizer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cvBase64: base64,
-            jobTitle: jobTitle || "poste non spécifié",
-            fileName: file.name,
-          }),
-        });
+      const response = await fetch("/api/cv-optimizer", {
+        method: "POST",
+        body: formData,
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (data.error) {
-          setError(data.error);
-        } else {
-          setResult(data);
-        }
-        setLoading(false);
-      };
-      reader.readAsDataURL(file);
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setResult(data);
+      }
     } catch (e) {
       setError("Une erreur est survenue. Réessayez.");
-      setLoading(false);
     }
+
+    setLoading(false);
   }
 
   return (
@@ -66,7 +59,6 @@ export default function CVOptimizer() {
       <main className="flex-grow pt-28 pb-20 px-6">
         <div className="max-w-3xl mx-auto">
 
-          {/* Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
@@ -82,7 +74,6 @@ export default function CVOptimizer() {
             <div className="border border-gray-200 rounded-2xl p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
 
-                {/* Upload CV */}
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-2 block">Votre CV (PDF ou TXT) *</label>
                   <div
@@ -93,7 +84,7 @@ export default function CVOptimizer() {
                     <input
                       id="cv-file"
                       type="file"
-                      accept=".pdf,.txt,.doc,.docx"
+                      accept=".pdf,.txt"
                       onChange={function(e) { setFile(e.target.files[0]); }}
                       className="hidden"
                     />
@@ -116,18 +107,17 @@ export default function CVOptimizer() {
                           </svg>
                         </div>
                         <p className="text-sm text-gray-500">Cliquez pour importer votre CV</p>
-                        <p className="text-xs text-gray-300 mt-1">PDF, TXT, DOC — max 5MB</p>
+                        <p className="text-xs text-gray-300 mt-1">PDF ou TXT — max 5MB</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Poste visé */}
                 <div>
                   <label className="text-xs font-medium text-gray-500 mb-2 block">Poste visé (optionnel)</label>
                   <input
                     type="text"
-                    placeholder="ex. Analyste KYC Senior, Product Manager, Développeur Full Stack..."
+                    placeholder="ex. Analyste KYC Senior, Product Manager..."
                     value={jobTitle}
                     onChange={function(e) { setJobTitle(e.target.value); }}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition"
@@ -158,7 +148,6 @@ export default function CVOptimizer() {
           ) : (
             <div className="space-y-6">
 
-              {/* Score global */}
               <div className="border border-gray-200 rounded-2xl p-8 text-center">
                 <p className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-2">Kbwee Score</p>
                 <div className="font-display text-7xl font-extrabold text-blue-600 mb-2">{result.score}</div>
@@ -166,9 +155,8 @@ export default function CVOptimizer() {
                 <p className="text-sm text-gray-500 mt-3 max-w-sm mx-auto">{result.summary}</p>
               </div>
 
-              {/* Points forts */}
               <div className="border border-gray-200 rounded-2xl p-8">
-                <h2 className="font-display text-xl font-extrabold mb-4 flex items-center gap-2">
+                <h2 className="font-display text-xl font-extrabold mb-4">
                   <span className="text-green-500">✓</span> Points forts
                 </h2>
                 <ul className="space-y-3">
@@ -183,9 +171,8 @@ export default function CVOptimizer() {
                 </ul>
               </div>
 
-              {/* Améliorations */}
               <div className="border border-gray-200 rounded-2xl p-8">
-                <h2 className="font-display text-xl font-extrabold mb-4 flex items-center gap-2">
+                <h2 className="font-display text-xl font-extrabold mb-4">
                   <span className="text-orange-500">↑</span> Améliorations prioritaires
                 </h2>
                 <ul className="space-y-3">
@@ -200,7 +187,6 @@ export default function CVOptimizer() {
                 </ul>
               </div>
 
-              {/* Recommandation pour le poste */}
               {result.jobMatch && (
                 <div className="border border-blue-100 bg-blue-50 rounded-2xl p-8">
                   <h2 className="font-display text-xl font-extrabold mb-3 text-blue-900">
@@ -210,7 +196,6 @@ export default function CVOptimizer() {
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex gap-3 flex-wrap">
                 <button
                   onClick={function() { setResult(null); setFile(null); setJobTitle(""); }}
