@@ -1,12 +1,15 @@
 export const config = {
-  api: { bodyParser: { sizeLimit: "1mb" } },
+  api: {
+    bodyParser: { sizeLimit: "1mb" },
+    responseLimit: false,
+  },
+  maxDuration: 30,
 };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { jobTitle, company, sector, level } = req.body;
-
+  const { jobTitle, company, sector } = req.body;
   if (!jobTitle) return res.status(400).json({ error: "Poste manquant" });
 
   try {
@@ -19,37 +22,34 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 1500,
         messages: [{
           role: "user",
-          content: `Tu es un expert RH senior. Génère une grille d'entretien complète et professionnelle pour le poste suivant.
+          content: `Expert RH. Grille d'entretien pour : ${jobTitle}${company ? " chez " + company : ""}${sector ? ", secteur " + sector : ""}.
 
-Poste : ${jobTitle}
-Entreprise : ${company || "non spécifiée"}
-Secteur : ${sector || "non spécifié"}
-Niveau : ${level || "Senior"}
-
-Retourne UNIQUEMENT un JSON valide sans texte avant ou après :
+JSON uniquement, sans texte avant ou après :
 {
-  "title": "<titre de la grille>",
-  "duration": "<durée recommandée>",
+  "title": "<titre>",
+  "duration": "<durée>",
   "sections": [
     {
-      "name": "<nom de la section>",
+      "name": "<section>",
       "duration": "<durée>",
       "questions": [
         {
           "question": "<question>",
-          "objective": "<ce qu'on évalue>",
-          "goodAnswer": "<éléments d'une bonne réponse>",
-          "redFlag": "<signaux d'alerte>"
+          "objective": "<objectif>",
+          "goodAnswer": "<bonne réponse>",
+          "redFlag": "<signal alerte>"
         }
       ]
     }
   ],
   "evaluationCriteria": ["<critère 1>", "<critère 2>", "<critère 3>"],
-  "recommendation": "<conseil global pour cet entretien>"
-}`
+  "recommendation": "<conseil>"
+}
+
+3 sections max, 3 questions par section.`,
         }],
       }),
     });
